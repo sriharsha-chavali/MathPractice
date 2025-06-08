@@ -7,7 +7,7 @@ function getRandomInt(min, max) {
 }
 
 function generateProblem() {
-  const num1 = getRandomInt(1, 9);
+  const num1 = getRandomInt(1, 20);
   const num2 = getRandomInt(0, num1);
   return { num1, num2 };
 }
@@ -21,13 +21,26 @@ export default function SubtractionGame() {
   const [score, setScore] = useState({ right: 0, wrong: 0 });
   const [questionNumber, setQuestionNumber] = useState(1);
   const [setFinished, setSetFinished] = useState(false);
+  const [questionTime, setQuestionTime] = useState(0);
+  const timerId = useRef(null);
   const inputRef = useRef(null);
 
-  // Focus the input whenever a new problem is loaded
+  // Timer and input focus management
   useEffect(() => {
+    setQuestionTime(0);
+    if (timerId.current) clearInterval(timerId.current);
+    
+    if (!setFinished) {
+      timerId.current = setInterval(() => {
+        setQuestionTime((t) => t + 1);
+      }, 1000);
+    }
+
     if (inputRef.current) {
       inputRef.current.focus();
     }
+
+    return () => clearInterval(timerId.current);
   }, [problem, setFinished]);
 
   const renderGraphics = (count) => (
@@ -47,7 +60,9 @@ export default function SubtractionGame() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    clearInterval(timerId.current);
     const correctAnswer = problem.num1 - problem.num2;
+    
     if (parseInt(userAnswer, 10) === correctAnswer) {
       setFeedback("🎉 Correct! Great job!");
       setScore(s => ({ ...s, right: s.right + 1 }));
@@ -55,6 +70,7 @@ export default function SubtractionGame() {
       setFeedback("❌ Oops! Try again.");
       setScore(s => ({ ...s, wrong: s.wrong + 1 }));
     }
+    
     setTimeout(nextQuestion, 1200);
   };
 
@@ -65,6 +81,7 @@ export default function SubtractionGame() {
     setProblem(generateProblem());
     setUserAnswer("");
     setFeedback("");
+    setQuestionTime(0);
   };
 
   if (setFinished) {
@@ -95,6 +112,9 @@ export default function SubtractionGame() {
           Correct: <span style={{ color: "green" }}>{score.right}</span> | 
           Wrong: <span style={{ color: "red" }}>{score.wrong}</span>
         </div>
+        <div>
+          Time: <span style={{ color: "blue" }}>{questionTime}s</span>
+        </div>
       </div>
       <div>
         {renderGraphics(problem.num1)}
@@ -110,7 +130,7 @@ export default function SubtractionGame() {
           ref={inputRef}
           type="number"
           min="0"
-          max="9"
+          max="20"
           value={userAnswer}
           onChange={(e) => setUserAnswer(e.target.value)}
           style={{ fontSize: "1.2rem", width: "3rem", textAlign: "center" }}
