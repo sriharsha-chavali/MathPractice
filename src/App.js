@@ -6,16 +6,24 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateProblem() {
-  const num1 = getRandomInt(1, 20);
-  const num2 = getRandomInt(0, num1);
-  return { num1, num2 };
+function generateProblem(operation) {
+  const num1 = 6;
+  if (operation === "subtraction") {
+    const num2 = getRandomInt(0, num1);
+    return { num1, num2 };
+  } else {
+    // addition: both addends between 0 and 6, sum <= 6
+    const num2 = getRandomInt(0, num1);
+    const num1_add = getRandomInt(0, num1 - num2);
+    return { num1: num1_add, num2 };
+  }
 }
 
 const QUESTIONS_PER_SET = 20;
 
-export default function SubtractionGame() {
-  const [problem, setProblem] = useState(generateProblem());
+export default function MathGame() {
+  const [operation, setOperation] = useState("subtraction");
+  const [problem, setProblem] = useState(generateProblem("subtraction"));
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState({ right: 0, wrong: 0 });
@@ -29,7 +37,7 @@ export default function SubtractionGame() {
   useEffect(() => {
     setQuestionTime(0);
     if (timerId.current) clearInterval(timerId.current);
-    
+
     if (!setFinished) {
       timerId.current = setInterval(() => {
         setQuestionTime((t) => t + 1);
@@ -43,13 +51,20 @@ export default function SubtractionGame() {
     return () => clearInterval(timerId.current);
   }, [problem, setFinished]);
 
-  const renderGraphics = (count) => (
-    <span style={{ fontSize: "2rem" }}>{"🐹".repeat(count)}</span>
-  );
+  // When operation changes, reset everything
+  useEffect(() => {
+    setProblem(generateProblem(operation));
+    setUserAnswer("");
+    setFeedback("");
+    setScore({ right: 0, wrong: 0 });
+    setQuestionNumber(1);
+    setSetFinished(false);
+    setQuestionTime(0);
+  }, [operation]);
 
   const nextQuestion = () => {
     if (questionNumber < QUESTIONS_PER_SET) {
-      setProblem(generateProblem());
+      setProblem(generateProblem(operation));
       setUserAnswer("");
       setFeedback("");
       setQuestionNumber(q => q + 1);
@@ -61,8 +76,13 @@ export default function SubtractionGame() {
   const handleSubmit = (e) => {
     e.preventDefault();
     clearInterval(timerId.current);
-    const correctAnswer = problem.num1 - problem.num2;
-    
+    let correctAnswer;
+    if (operation === "subtraction") {
+      correctAnswer = problem.num1 - problem.num2;
+    } else {
+      correctAnswer = problem.num1 + problem.num2;
+    }
+
     if (parseInt(userAnswer, 10) === correctAnswer) {
       setFeedback("🎉 Correct! Great job!");
       setScore(s => ({ ...s, right: s.right + 1 }));
@@ -70,7 +90,7 @@ export default function SubtractionGame() {
       setFeedback("❌ Oops! Try again.");
       setScore(s => ({ ...s, wrong: s.wrong + 1 }));
     }
-    
+
     setTimeout(nextQuestion, 1200);
   };
 
@@ -78,15 +98,44 @@ export default function SubtractionGame() {
     setScore({ right: 0, wrong: 0 });
     setQuestionNumber(1);
     setSetFinished(false);
-    setProblem(generateProblem());
+    setProblem(generateProblem(operation));
     setUserAnswer("");
     setFeedback("");
     setQuestionTime(0);
   };
 
+  // Breadcrumb navigation UI
+  const breadcrumbStyle = (op) => ({
+    padding: "0.5rem 1rem",
+    cursor: "pointer",
+    fontWeight: operation === op ? "bold" : "normal",
+    color: operation === op ? "#fff" : "#007bff",
+    background: operation === op ? "#007bff" : "transparent",
+    borderRadius: "1rem",
+    marginRight: "0.5rem",
+    border: "none",
+    outline: "none",
+    fontSize: "1.1rem",
+    transition: "background 0.2s, color 0.2s"
+  });
+
   if (setFinished) {
     return (
       <div style={{ textAlign: "center", marginTop: "2rem" }}>
+        <div style={{ marginBottom: "1.5rem" }}>
+          <span
+            style={breadcrumbStyle("subtraction")}
+            onClick={() => setOperation("subtraction")}
+          >
+            Subtraction
+          </span>
+          <span
+            style={breadcrumbStyle("addition")}
+            onClick={() => setOperation("addition")}
+          >
+            Addition
+          </span>
+        </div>
         <h2>Set Finished!</h2>
         <div style={{ fontSize: "1.5rem", margin: "1rem" }}>
           You got <span style={{ color: "green" }}>{score.right}</span> right and <span style={{ color: "red" }}>{score.wrong}</span> wrong out of {QUESTIONS_PER_SET} questions.
@@ -103,7 +152,21 @@ export default function SubtractionGame() {
 
   return (
     <div style={{ textAlign: "center", marginTop: "2rem" }}>
-      <h2>Subtraction Practice</h2>
+      <div style={{ marginBottom: "1.5rem" }}>
+        <span
+          style={breadcrumbStyle("subtraction")}
+          onClick={() => setOperation("subtraction")}
+        >
+          Subtraction
+        </span>
+        <span
+          style={breadcrumbStyle("addition")}
+          onClick={() => setOperation("addition")}
+        >
+          Addition
+        </span>
+      </div>
+      <h2>{operation === "subtraction" ? "Subtraction Practice" : "Addition Practice"}</h2>
       <div style={{ marginBottom: "1rem" }}>
         <div>
           Question: {questionNumber} / {QUESTIONS_PER_SET}
@@ -117,12 +180,8 @@ export default function SubtractionGame() {
         </div>
       </div>
       <div>
-        {renderGraphics(problem.num1)}
-        <div style={{ fontSize: "1.5rem", margin: "1rem" }}>
-          - {renderGraphics(problem.num2)}
-        </div>
         <div style={{ fontSize: "2rem", margin: "1rem" }}>
-          {problem.num1} - {problem.num2} = ?
+          {problem.num1} {operation === "subtraction" ? "-" : "+"} {problem.num2} = ?
         </div>
       </div>
       <form onSubmit={handleSubmit}>
@@ -130,7 +189,7 @@ export default function SubtractionGame() {
           ref={inputRef}
           type="number"
           min="0"
-          max="20"
+          max="6"
           value={userAnswer}
           onChange={(e) => setUserAnswer(e.target.value)}
           style={{ fontSize: "1.2rem", width: "3rem", textAlign: "center" }}
