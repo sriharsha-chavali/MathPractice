@@ -34,6 +34,9 @@ export default function Breadcrumb({ operation, setOperation }) {
 	   <span style={breadcrumbStyle("clocks")} onClick={() => setOperation("clocks")}>
         Clocks
       </span>
+	  <span style={breadcrumbStyle("analog-clocks")} onClick={() => setOperation("analog-clocks")}>
+        Analog Clocks
+      </span>
     </div>
   );
 }

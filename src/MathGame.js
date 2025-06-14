@@ -8,6 +8,7 @@ import Scoreboard from "./components/Scoreboard";
 import ProblemForm from "./components/ProblemForm";
 import SetFinished from "./components/SetFinished";
 import ClockPractice from "./components/ClockPractice";
+import AnalogClockPractice from "./components/AnalogClockPractice";
 
 const QUESTIONS_PER_SET = 12;
 
@@ -104,6 +105,15 @@ export default function MathGame() {
       </div>
     );
   }
+  
+  if (operation === "analog-clocks") {
+  return (
+    <div style={{ textAlign: "center", marginTop: "2rem" }}>
+      <Breadcrumb operation={operation} setOperation={setOperation} />
+      <AnalogClockPractice />
+    </div>
+  );
+}
 
   // --- Existing math practice rendering ---
   if (setFinished) {
