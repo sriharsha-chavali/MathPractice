@@ -7,6 +7,7 @@ import MaxNumberInput from "./components/MaxNumberInput";
 import Scoreboard from "./components/Scoreboard";
 import ProblemForm from "./components/ProblemForm";
 import SetFinished from "./components/SetFinished";
+import ClockPractice from "./components/ClockPractice";
 
 const QUESTIONS_PER_SET = 12;
 
@@ -94,6 +95,17 @@ export default function MathGame() {
     setQuestionTime(0);
   };
 
+  // --- NEW: Render ClockPractice if operation is "clocks" ---
+  if (operation === "clocks") {
+    return (
+      <div style={{ textAlign: "center", marginTop: "2rem" }}>
+        <Breadcrumb operation={operation} setOperation={setOperation} />
+        <ClockPractice />
+      </div>
+    );
+  }
+
+  // --- Existing math practice rendering ---
   if (setFinished) {
     return (
       <SetFinished
