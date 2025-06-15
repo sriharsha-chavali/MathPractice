@@ -29,7 +29,7 @@ export default function AnalogClock({ hour, minute, size = 120 }) {
     const outer = handPos(angle, size * 0.48);
     marks.push(
       <line
-        key={i}
+        key={`hour-${i}`}
         x1={inner.x2}
         y1={inner.y2}
         x2={outer.x2}
@@ -40,10 +40,32 @@ export default function AnalogClock({ hour, minute, size = 120 }) {
     );
   }
 
+  // Draw minute marks (60 smaller marks)
+  const minuteMarks = [];
+  for (let i = 0; i < 60; i++) {
+    if (i % 5 === 0) continue; // Skip positions with hour marks
+    const angle = getAngle(i, 60);
+    const inner = handPos(angle, size * 0.45);
+    const outer = handPos(angle, size * 0.48);
+    minuteMarks.push(
+      <line
+        key={`minute-${i}`}
+        x1={inner.x2}
+        y1={inner.y2}
+        x2={outer.x2}
+        y2={outer.y2}
+        stroke="#999"
+        strokeWidth={1}
+      />
+    );
+  }
+
   return (
     <svg width={size} height={size} style={{ background: "#f8f9fa", borderRadius: "50%" }}>
       {/* Clock face */}
       <circle cx={center} cy={center} r={size * 0.48} fill="#fff" stroke="#888" strokeWidth={3} />
+      {/* Minute marks */}
+      {minuteMarks}
       {/* Hour marks */}
       {marks}
       {/* Hour hand */}
