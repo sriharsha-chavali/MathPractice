@@ -1,5 +1,3 @@
-// MathGame.js
-
 import React, { useState, useRef, useEffect } from "react";
 import { getRandomInt, generateProblem } from "./utils/mathUtils";
 import Breadcrumb from "./components/Breadcrumb";
@@ -24,6 +22,7 @@ export default function MathGame() {
   const [questionTime, setQuestionTime] = useState(0);
   const timerId = useRef(null);
   const inputRef = useRef(null);
+  const shouldFocus = useRef(false);
 
   // Timer and input focus management
   useEffect(() => {
@@ -36,8 +35,9 @@ export default function MathGame() {
       }, 1000);
     }
 
-    if (inputRef.current) {
+    if (shouldFocus.current && inputRef.current) {
       inputRef.current.focus();
+      shouldFocus.current = false;
     }
 
     return () => clearInterval(timerId.current);
@@ -59,7 +59,8 @@ export default function MathGame() {
       setProblem(generateProblem(operation, maxNumber));
       setUserAnswer("");
       setFeedback("");
-      setQuestionNumber(q => q + 1);
+      setQuestionNumber((q) => q + 1);
+      shouldFocus.current = true;
     } else {
       setSetFinished(true);
     }
@@ -68,19 +69,40 @@ export default function MathGame() {
   const handleSubmit = (e) => {
     e.preventDefault();
     clearInterval(timerId.current);
+
+    // Optional: Check if answer exceeds maxNumber
+    const answerValue = parseInt(userAnswer, 10);
+    // if (answerValue > maxNumber) {
+      // setFeedback("❌ Answer exceeds max number!");
+      // setScore((s) => ({ ...s, wrong: s.wrong + 1 }));
+      // setTimeout(nextQuestion, 1200);
+      // return;
+    // }
+
     let correctAnswer;
-    if (operation === "subtraction") {
-      correctAnswer = problem.num1 - problem.num2;
-    } else {
-      correctAnswer = problem.num1 + problem.num2;
+    switch(operation) {
+      case "subtraction":
+        correctAnswer = problem.num1 - problem.num2;
+        break;
+      case "addition":
+        correctAnswer = problem.num1 + problem.num2;
+        break;
+      case "multiplication":
+        correctAnswer = problem.num1 * problem.num2;
+        break;
+      case "division":
+        correctAnswer = problem.num1 / problem.num2; // Already guaranteed to be integer
+        break;
+      default:
+        correctAnswer = problem.num1 + problem.num2;
     }
 
     if (parseInt(userAnswer, 10) === correctAnswer) {
       setFeedback("🎉 Correct! Great job!");
-      setScore(s => ({ ...s, right: s.right + 1 }));
+      setScore((s) => ({ ...s, right: s.right + 1 }));
     } else {
       setFeedback("❌ Oops! Try again.");
-      setScore(s => ({ ...s, wrong: s.wrong + 1 }));
+      setScore((s) => ({ ...s, wrong: s.wrong + 1 }));
     }
 
     setTimeout(nextQuestion, 1200);
@@ -94,9 +116,10 @@ export default function MathGame() {
     setUserAnswer("");
     setFeedback("");
     setQuestionTime(0);
+    shouldFocus.current = true;
   };
 
-  // --- NEW: Render ClockPractice if operation is "clocks" ---
+  // Render ClockPractice if operation is "clocks"
   if (operation === "clocks") {
     return (
       <div style={{ textAlign: "center", marginTop: "2rem" }}>
@@ -105,17 +128,17 @@ export default function MathGame() {
       </div>
     );
   }
-  
-  if (operation === "analog-clocks") {
-  return (
-    <div style={{ textAlign: "center", marginTop: "2rem" }}>
-      <Breadcrumb operation={operation} setOperation={setOperation} />
-      <AnalogClockPractice />
-    </div>
-  );
-}
 
-  // --- Existing math practice rendering ---
+  if (operation === "analog-clocks") {
+    return (
+      <div style={{ textAlign: "center", marginTop: "2rem" }}>
+        <Breadcrumb operation={operation} setOperation={setOperation} />
+        <AnalogClockPractice />
+      </div>
+    );
+  }
+
+  // Existing math practice rendering
   if (setFinished) {
     return (
       <SetFinished
@@ -133,14 +156,19 @@ export default function MathGame() {
   return (
     <div style={{ textAlign: "center", marginTop: "2rem" }}>
       <Breadcrumb operation={operation} setOperation={setOperation} />
-      {operation === "subtraction" && (
+      {(operation === "subtraction" || operation === "multiplication" || operation === "division") && (
         <MaxNumberInput
           maxNumber={maxNumber}
           setMaxNumber={setMaxNumber}
           disabled={!!feedback}
         />
       )}
-      <h2>{operation === "subtraction" ? "Subtraction Practice" : "Addition Practice"}</h2>
+      <h2>
+        {operation === "subtraction" ? "Subtraction Practice" :
+         operation === "addition" ? "Addition Practice" :
+         operation === "multiplication" ? "Multiplication Practice" :
+         "Division Practice"}
+      </h2>
       <Scoreboard
         questionNumber={questionNumber}
         QUESTIONS_PER_SET={QUESTIONS_PER_SET}
@@ -149,7 +177,12 @@ export default function MathGame() {
       />
       <div>
         <div style={{ fontSize: "2rem", margin: "1rem" }}>
-          {problem.num1} {operation === "subtraction" ? "-" : "+"} {problem.num2} = ?
+          {problem.num1} 
+          {operation === "subtraction" ? " - " :
+           operation === "addition" ? " + " :
+           operation === "multiplication" ? " × " :
+           " ÷ "} 
+          {problem.num2} = ?
         </div>
       </div>
       <ProblemForm

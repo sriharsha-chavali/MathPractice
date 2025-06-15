@@ -1,5 +1,3 @@
-// components/MaxNumberInput.js
-
 import React from "react";
 
 export default function MaxNumberInput({ maxNumber, setMaxNumber, disabled }) {
@@ -10,7 +8,6 @@ export default function MaxNumberInput({ maxNumber, setMaxNumber, disabled }) {
         <input
           type="number"
           min="1"
-          max="20"
           value={maxNumber}
           onChange={e => setMaxNumber(Number(e.target.value))}
           style={{ width: "4rem", fontSize: "1rem", textAlign: "center" }}
