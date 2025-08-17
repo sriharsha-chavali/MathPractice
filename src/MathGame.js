@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { getRandomInt, generateProblem } from "./utils/mathUtils";
+import { generateProblem } from "./utils/mathUtils";
 import Breadcrumb from "./components/Breadcrumb";
 import MaxNumberInput from "./components/MaxNumberInput";
 import Scoreboard from "./components/Scoreboard";
@@ -11,9 +11,13 @@ import AnalogClockPractice from "./components/AnalogClockPractice";
 const QUESTIONS_PER_SET = 12;
 
 export default function MathGame() {
-  const [operation, setOperation] = useState("subtraction");
+  const [operation, setOperation] = useState("subtraction"); // user selection, can be "mixed"
   const [maxNumber, setMaxNumber] = useState(6);
-  const [problem, setProblem] = useState(generateProblem("subtraction", 6));
+
+  // The actual problem operation for current question
+  const [problemOperation, setProblemOperation] = useState("subtraction");
+
+  const [problem, setProblem] = useState(generateProblem("subtraction", maxNumber));
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState({ right: 0, wrong: 0 });
@@ -24,7 +28,27 @@ export default function MathGame() {
   const inputRef = useRef(null);
   const shouldFocus = useRef(false);
 
-  // Timer and input focus management
+  const getRandomOperation = () => (Math.random() < 0.5 ? "addition" : "subtraction");
+
+  // Generate new problem according to problemOperation
+  const generateNewProblem = (op) => {
+    setProblemOperation(op);
+    setProblem(generateProblem(op, maxNumber));
+    setUserAnswer("");
+    setFeedback("");
+  };
+
+  useEffect(() => {
+    // When operation or maxNumber changes, reset everything
+    let op = operation === "mixed" ? getRandomOperation() : operation;
+    generateNewProblem(op);
+    setScore({ right: 0, wrong: 0 });
+    setQuestionNumber(1);
+    setSetFinished(false);
+    setQuestionTime(0);
+  }, [operation, maxNumber]);
+
+  // Timer and input focus
   useEffect(() => {
     setQuestionTime(0);
     if (timerId.current) clearInterval(timerId.current);
@@ -43,22 +67,10 @@ export default function MathGame() {
     return () => clearInterval(timerId.current);
   }, [problem, setFinished]);
 
-  // When operation or maxNumber changes, reset everything
-  useEffect(() => {
-    setProblem(generateProblem(operation, maxNumber));
-    setUserAnswer("");
-    setFeedback("");
-    setScore({ right: 0, wrong: 0 });
-    setQuestionNumber(1);
-    setSetFinished(false);
-    setQuestionTime(0);
-  }, [operation, maxNumber]);
-
   const nextQuestion = () => {
     if (questionNumber < QUESTIONS_PER_SET) {
-      setProblem(generateProblem(operation, maxNumber));
-      setUserAnswer("");
-      setFeedback("");
+      let op = operation === "mixed" ? getRandomOperation() : operation;
+      generateNewProblem(op);
       setQuestionNumber((q) => q + 1);
       shouldFocus.current = true;
     } else {
@@ -70,17 +82,10 @@ export default function MathGame() {
     e.preventDefault();
     clearInterval(timerId.current);
 
-    // Optional: Check if answer exceeds maxNumber
     const answerValue = parseInt(userAnswer, 10);
-    // if (answerValue > maxNumber) {
-      // setFeedback("❌ Answer exceeds max number!");
-      // setScore((s) => ({ ...s, wrong: s.wrong + 1 }));
-      // setTimeout(nextQuestion, 1200);
-      // return;
-    // }
-
     let correctAnswer;
-    switch(operation) {
+
+    switch (problemOperation) {
       case "subtraction":
         correctAnswer = problem.num1 - problem.num2;
         break;
@@ -91,13 +96,13 @@ export default function MathGame() {
         correctAnswer = problem.num1 * problem.num2;
         break;
       case "division":
-        correctAnswer = problem.num1 / problem.num2; // Already guaranteed to be integer
+        correctAnswer = problem.num1 / problem.num2;
         break;
       default:
         correctAnswer = problem.num1 + problem.num2;
     }
 
-    if (parseInt(userAnswer, 10) === correctAnswer) {
+    if (answerValue === correctAnswer) {
       setFeedback("🎉 Correct! Great job!");
       setScore((s) => ({ ...s, right: s.right + 1 }));
     } else {
@@ -112,14 +117,13 @@ export default function MathGame() {
     setScore({ right: 0, wrong: 0 });
     setQuestionNumber(1);
     setSetFinished(false);
-    setProblem(generateProblem(operation, maxNumber));
-    setUserAnswer("");
-    setFeedback("");
+    let op = operation === "mixed" ? getRandomOperation() : operation;
+    generateNewProblem(op);
     setQuestionTime(0);
     shouldFocus.current = true;
   };
 
-  // Render ClockPractice if operation is "clocks"
+  // Special case: digital clocks
   if (operation === "clocks") {
     return (
       <div style={{ textAlign: "center", marginTop: "2rem" }}>
@@ -129,6 +133,7 @@ export default function MathGame() {
     );
   }
 
+  // Special case: analog clocks
   if (operation === "analog-clocks") {
     return (
       <div style={{ textAlign: "center", marginTop: "2rem" }}>
@@ -138,7 +143,6 @@ export default function MathGame() {
     );
   }
 
-  // Existing math practice rendering
   if (setFinished) {
     return (
       <SetFinished
@@ -153,38 +157,50 @@ export default function MathGame() {
     );
   }
 
+  // Display operator by current problemOperation
+  const displayOperator =
+    problemOperation === "subtraction"
+      ? " - "
+      : problemOperation === "addition"
+      ? " + "
+      : problemOperation === "multiplication"
+      ? " × "
+      : problemOperation === "division"
+      ? " ÷ "
+      : " + ";
+
   return (
     <div style={{ textAlign: "center", marginTop: "2rem" }}>
       <Breadcrumb operation={operation} setOperation={setOperation} />
-      {(operation === "subtraction" || operation === "multiplication" || operation === "division") && (
-        <MaxNumberInput
-          maxNumber={maxNumber}
-          setMaxNumber={setMaxNumber}
-          disabled={!!feedback}
-        />
+
+      {(operation === "subtraction" ||
+        operation === "multiplication" ||
+        operation === "division" ||
+        operation === "mixed") && (
+        <MaxNumberInput maxNumber={maxNumber} setMaxNumber={setMaxNumber} disabled={!!feedback} />
       )}
+
       <h2>
-        {operation === "subtraction" ? "Subtraction Practice" :
-         operation === "addition" ? "Addition Practice" :
-         operation === "multiplication" ? "Multiplication Practice" :
-         "Division Practice"}
+        {operation === "mixed"
+          ? "Mixed (Addition + Subtraction) Practice"
+          : `${operation.charAt(0).toUpperCase() + operation.slice(1)} Practice`}
       </h2>
+
       <Scoreboard
         questionNumber={questionNumber}
         QUESTIONS_PER_SET={QUESTIONS_PER_SET}
         score={score}
         questionTime={questionTime}
       />
+
       <div>
         <div style={{ fontSize: "2rem", margin: "1rem" }}>
-          {problem.num1} 
-          {operation === "subtraction" ? " - " :
-           operation === "addition" ? " + " :
-           operation === "multiplication" ? " × " :
-           " ÷ "} 
+          {problem.num1}
+          {displayOperator}
           {problem.num2} = ?
         </div>
       </div>
+
       <ProblemForm
         operation={operation}
         problem={problem}
@@ -195,9 +211,8 @@ export default function MathGame() {
         inputRef={inputRef}
         maxNumber={maxNumber}
       />
-      <div style={{ marginTop: "1rem", fontSize: "1.2rem" }}>
-        {feedback}
-      </div>
+
+      <div style={{ marginTop: "1rem", fontSize: "1.2rem" }}>{feedback}</div>
     </div>
   );
 }

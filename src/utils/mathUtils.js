@@ -6,14 +6,14 @@ export function getRandomInt(min, max) {
 
 export function generateProblem(operation, maxNumber) {
   if (operation === "subtraction") {
-    const num1 = maxNumber;
-    const num2 = getRandomInt(0, num1);
+    const num1 = getRandomInt(11, 99);
+    const num2 = getRandomInt(6, 9);
     return { num1, num2 };
   }
 
   if (operation === "addition") {
-    const num2 = getRandomInt(0, maxNumber);
-    const num1 = getRandomInt(0, maxNumber - num2);
+    const num2 = getRandomInt(6, 9);
+    const num1 = getRandomInt(11, 99);
     return { num1, num2 };
   }
 

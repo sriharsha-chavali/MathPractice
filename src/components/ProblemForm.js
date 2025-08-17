@@ -18,7 +18,7 @@ export default function ProblemForm({
         ref={inputRef}
         type="number"
         min="0"
-        max={maxNumber}
+        // max={maxNumber}
         value={userAnswer}
         onChange={(e) => setUserAnswer(e.target.value)}
         style={{ fontSize: "1.2rem", width: "3rem", textAlign: "center" }}

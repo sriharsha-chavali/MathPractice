@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Breadcrumb({ operation, set2Operation, setOperation }) {
+export default function Breadcrumb({ operation, setOperation }) {
   const breadcrumbStyle = (op) => ({
     padding: "0.5rem 1rem",
     cursor: "pointer",
@@ -40,6 +40,12 @@ export default function Breadcrumb({ operation, set2Operation, setOperation }) {
         onClick={() => setOperation("division")}
       >
         Division
+      </span>
+      <span
+        style={breadcrumbStyle("mixed")}
+        onClick={() => setOperation("mixed")}
+      >
+        Mixed (+ & -)
       </span>
       <span
         style={breadcrumbStyle("clocks")}
